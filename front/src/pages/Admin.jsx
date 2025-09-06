@@ -24,13 +24,13 @@ const AdminDashboard = () => {
 
   const [productForm, setProductForm] = useState({
     name: '',
-    price: ''
+    price: '',
+    inStock: ''
   });
 
   const [userForm, setUserForm] = useState({
     email: '',
-    password: '',
-    role: 'USER'
+    role: 'ROLE_USER'
   });
 
   // Fetch data functions
@@ -57,6 +57,28 @@ const AdminDashboard = () => {
       console.error('Error fetching products:', error);
     }
   };
+
+  const uploadProductPhoto = async (productId, file) => {
+    const formData = new FormData();
+    formData.append("id", productId);
+    formData.append("image", file);
+
+    try {
+      const response = await fetch(`${API_BASE}/product/photo`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (response.ok) {
+        fetchProducts();
+      } else {
+        alert("Ошибка загрузки фото");
+      }
+    } catch (error) {
+      console.error("Ошибка загрузки фото:", error);
+    }
+  };
+
 
   // Save functions
   const saveOrder = async () => {
@@ -190,10 +212,9 @@ const deleteUser = async (id) => {
           break;
       }
     } else {
-      // Reset forms for new items
       setOrderForm({ customerName: '', customerPhone: '', customerEmail: '', items: [] });
       setProductForm({ name: '', price: '' });
-      setUserForm({ email: '', password: '', role: 'USER' });
+      setUserForm({ email: '', role: 'ROLE_USER' });
     }
   };
 
@@ -331,27 +352,51 @@ const deleteUser = async (id) => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProducts.map((product) => (
             <div key={product.id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+              {product.imageUrl ? (
+                <img
+                  src={`${API_BASE}/product/images/${product.imageUrl}`}
+                  alt={product.name}
+                  className="w-full h-40 object-cover rounded-md mb-4"
+                />
+              ) : (
+                <div className="w-full h-40 bg-gray-100 flex items-center justify-center text-gray-400 mb-4">
+                  Нет фото
+                </div>
+              )}
               <div className="flex justify-between items-start mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">{product.name}</h3>
                 <div>
-                <button
-                  onClick={() => openModal('product', product)}
-                  className="text-green-600 hover:text-green-800"
-                >
-                  <Edit size={16} />
-                </button>
-                <button
+                  <button
+                    onClick={() => openModal('product', product)}
+                    className="text-green-600 hover:text-green-800"
+                  >
+                    <Edit size={16} />
+                  </button>
+                  <button
                     onClick={() => deleteProduct(product.id)}
                     className="text-red-600 hover:text-red-800 ml-2"
-                    >
+                  >
                     <Trash2 size={16} />
-                </button>
+                  </button>
                 </div>
-
               </div>
               <div className="text-2xl font-bold text-green-600">₽{product.price}</div>
               <div className="text-sm text-gray-500 mt-2">ID: {product.id}</div>
+
+              <div className="flex items-center gap-2 mt-2">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    if (e.target.files.length > 0) {
+                      uploadProductPhoto(product.id, e.target.files[0]);
+                    }
+                  }}
+                  className="text-sm"
+                />
+              </div>
             </div>
+
           ))}
         </div>
       </div>
@@ -574,10 +619,25 @@ const deleteUser = async (id) => {
                 <input
                   type="number"
                   min="0"
-                  step="0.01"
+                  step="10"
                   value={productForm.price}
                   onChange={(e) =>
                     setProductForm({ ...productForm, price: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  В наличии
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={productForm.inStock}
+                  onChange={(e) =>
+                    setProductForm({ ...productForm, inStock: e.target.value })
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
@@ -611,8 +671,8 @@ const deleteUser = async (id) => {
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                 >
-                  <option value="USER">Пользователь</option>
-                  <option value="ADMIN">Администратор</option>
+                  <option value="ROLE_USER">Пользователь</option>
+                  <option value="ROLE_ADMIN">Администратор</option>
                 </select>
               </div>
             </>

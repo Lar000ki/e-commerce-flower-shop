@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, ShoppingCart, Star, Truck, Shield, Phone, Mail, MapPin, Instagram, Facebook, Twitter } from 'lucide-react';
+import { Heart, ShoppingCart, Truck, Shield, Phone, Mail, MapPin, Instagram, Facebook, Twitter } from 'lucide-react';
+
+const API_BASE = 'http://localhost:8080/api';
 
 const FlowerPanLanding = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -31,36 +33,32 @@ const FlowerPanLanding = () => {
     }
   ];
 
-  const products = [
-    {
-      id: 1,
-      name: "Букет роз 'Страсть'",
-      price: 2500,
-      image: "https://images.unsplash.com/photo-1518895949257-7621c3c786d7?w=300&h=300&fit=crop",
-      rating: 4.9
-    },
-    {
-      id: 2,
-      name: "Композиция 'Нежность'",
-      price: 1800,
-      image: "https://images.unsplash.com/photo-1563241527-3004b7be0ffd?w=300&h=300&fit=crop",
-      rating: 4.8
-    },
-    {
-      id: 3,
-      name: "Букет тюльпанов",
-      price: 1200,
-      image: "https://images.unsplash.com/photo-1520763185298-1b434c919102?w=300&h=300&fit=crop",
-      rating: 4.7
-    },
-    {
-      id: 4,
-      name: "Свадебный букет",
-      price: 4500,
-      image: "https://images.unsplash.com/photo-1487070183336-b863922373d4?w=300&h=300&fit=crop",
-      rating: 5.0
+  const [products, setProducts] = useState([]);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [productsError, setProductsError] = useState(false);
+
+useEffect(() => {
+  const fetchProducts = async () => {
+    try {
+      setProductsLoading(true);
+      const response = await fetch(API_BASE + '/product/all');
+      
+      if (response.ok) {
+        const data = await response.json();
+        setProducts(data);
+      } else {
+        setProductsError(true);
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      setProductsError(true);
+    } finally {
+      setProductsLoading(false);
     }
-  ];
+  };
+
+  fetchProducts();
+}, []);
 
   const features = [
     {
@@ -189,52 +187,117 @@ const FlowerPanLanding = () => {
 
       {/* Products Section */}
       <section id="catalog" className="py-20 bg-gradient-to-r from-pink-50 to-purple-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">Популярные букеты</h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Откройте для себя наши самые любимые композиции, созданные с особой заботой и вниманием к деталям
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {products.map((product) => (
-              <div key={product.id} className="bg-white rounded-3xl shadow-lg overflow-hidden group hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2">
-                <div className="relative overflow-hidden">
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                </div>
-                <div className="p-6">
-                  <div className="flex items-center mb-2">
-                    <div className="flex text-yellow-400">
-                      {[...Array(5)].map((_, i) => (
-                        <Star key={i} className={`w-4 h-4 ${i < Math.floor(product.rating) ? 'fill-current' : ''}`} />
-                      ))}
-                    </div>
-                    <span className="text-sm text-gray-600 ml-2">({product.rating})</span>
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3">{product.name}</h3>
-                  <div className="flex items-center justify-between">
-                    <span className="text-2xl font-bold text-pink-600">{product.price} ₽</span>
-                    <button className="bg-gradient-to-r from-pink-500 to-purple-600 text-white p-3 rounded-full hover:shadow-lg transition-all duration-300 transform hover:scale-105">
-                      <ShoppingCart className="w-5 h-5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-          
-          <div className="text-center mt-12">
-            <button className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-12 py-4 rounded-full text-lg font-semibold hover:shadow-lg transition-all duration-300 transform hover:scale-105">
-              Посмотреть все букеты
-            </button>
-          </div>
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="text-center mb-16">
+      <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">Популярные букеты</h2>
+      <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+        Откройте для себя наши самые любимые композиции, созданные с особой заботой и вниманием к деталям
+      </p>
+    </div>
+    
+    {/* Состояние загрузки */}
+    {productsLoading && (
+      <div className="flex justify-center items-center py-20">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
+        <span className="ml-4 text-gray-600 text-lg">Загрузка товаров...</span>
+      </div>
+    )}
+
+    {/* Ошибка загрузки */}
+    {productsError && (
+      <div className="text-center py-20">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-8 max-w-md mx-auto">
+          <h3 className="text-red-800 font-semibold mb-2">Ошибка загрузки</h3>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors"
+          >
+            Попробовать снова
+          </button>
         </div>
-      </section>
+      </div>
+    )}
+
+    {/* Пустой список */}
+    {!productsLoading && !productsError && products.length === 0 && (
+      <div className="text-center py-20">
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 max-w-md mx-auto">
+          <h3 className="text-gray-800 font-semibold mb-2">Товары не найдены</h3>
+          <p className="text-gray-600">В настоящее время товары отсутствуют в каталоге</p>
+        </div>
+      </div>
+    )}
+
+    {/* Список товаров */}
+    {!productsLoading && !productsError && products.length > 0 && (
+      <>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {products.map((product) => (
+            <div key={product.id} className="bg-white rounded-3xl shadow-lg overflow-hidden group hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2">
+
+              <div className="relative overflow-hidden">
+                <img
+                  src={product.imageUrl 
+                    ? API_BASE + `/product/images/${product.imageUrl}` 
+                    : "https://images.unsplash.com/photo-1563241527-3004b7be0ffd?w=300&h=300&fit=crop"
+                  }
+                  alt={product.name}
+                  className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
+                  onError={(e) => {
+                    e.target.src = "https://images.unsplash.com/photo-1563241527-3004b7be0ffd?w=300&h=300&fit=crop";
+                  }}
+                />
+                
+                {/* Overlay для товаров не в наличии */}
+                {product.inStock === 0 && (
+                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                    <span className="text-white font-semibold text-lg">Нет в наличии</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="p-6">
+                <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2">
+                  {product.name}
+                </h3>
+                
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-2xl font-bold text-pink-600">
+                    {product.price} ₽
+                  </span>
+                </div>
+
+                <button 
+                  disabled={product.inStock === 0}
+                  className={`w-full py-3 rounded-full font-semibold transition-all duration-300 transform flex items-center justify-center space-x-2 ${
+                    product.inStock === 0 
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                      : 'bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:shadow-lg hover:scale-105'
+                  }`}
+                  onClick={() => {
+                    if (product.inStock > 0) {
+                      // Логика добавления в корзину
+                      console.log('в корзину:', product.id);
+                    }
+                  }}
+                >
+                  <ShoppingCart className="w-5 h-5" />
+                  <span>{product.inStock === 0 ? 'Нет в наличии' : 'В корзину'}</span>
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        <div className="text-center mt-12">
+          <button className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-12 py-4 rounded-full text-lg font-semibold hover:shadow-lg transition-all duration-300 transform hover:scale-105">
+            Посмотреть все букеты ({products.length})
+          </button>
+        </div>
+      </>
+    )}
+  </div>
+</section>
 
       {/* About Section */}
       <section id="about" className="py-20 bg-white">
