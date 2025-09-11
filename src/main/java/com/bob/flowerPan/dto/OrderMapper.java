@@ -25,7 +25,10 @@ public class OrderMapper {
                 items,
                 items.stream()
                         .mapToDouble(item -> item.getPrice() * item.getQuantity())
-                        .sum()
+                        .sum(),
+                order.getAddress(),
+                order.getComment(),
+                order.getDeliveryTime()
         );
     }
 }

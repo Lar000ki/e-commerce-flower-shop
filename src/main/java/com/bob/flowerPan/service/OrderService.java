@@ -16,33 +16,12 @@ import java.util.List;
 public class OrderService {
 
     private final OrderRepo repository;
-    private final ProductRepo productRepo;
+    private final ProductRepo productRepository;
 
-    public OrderService(OrderRepo repository, ProductRepo productRepo){
+    public OrderService(OrderRepo repository, ProductRepo productRepository){
         this.repository = repository;
-        this.productRepo = productRepo;
+        this.productRepository = productRepository;
     }
-
-//    public List<Order> findAll(){
-//        return repository.findAll();
-//    }
-
-//    @Transactional
-//    public void saveOrder(Order order){
-//        // связываем каждый OrderItem с заказом
-//        for (OrderItem item : order.getItems()) {
-//            item.setOrder(order);
-//
-//            // если приходит только product.id – подтягиваем продукт из БД
-//            if (item.getProduct() != null && item.getProduct().getId() != 0) {
-//                Product product = productRepo.findById(item.getProduct().getId())
-//                        .orElseThrow(() -> new RuntimeException("Product not found: " + item.getProduct().getId()));
-//                item.setProduct(product);
-//            }
-//        }
-//
-//    repository.save(order); // каскад сохранит и items
-//}
 
     public List<OrderDto> findAll(){
         return repository.findAll().stream()
@@ -50,10 +29,28 @@ public class OrderService {
                 .toList();
     }
 
-    public void saveOrder(Order order){
+    @Transactional
+    public void saveOrder(Order order, boolean isAdmin){
+
+        if (!isAdmin && order.getId() != null) {
+            throw new RuntimeException("Обновление заказов запрещено");
+        }
+
         for (OrderItem item : order.getItems()) {
+            Product product = productRepository.findById(item.getProduct().getId())
+                    .orElseThrow(() -> new RuntimeException("Товар не найден: " + item.getProduct().getId()));
+
+            if (product.getInStock() < item.getQuantity()) {
+                throw new RuntimeException("позиции \"" + product.getName() + "\" недостаточно на складе");
+            }
+
+            product.setInStock(product.getInStock() - item.getQuantity());
+            productRepository.save(product);
+
+            item.setProduct(product);
             item.setOrder(order);
         }
+
         repository.save(order);
     }
 

@@ -20,6 +20,9 @@ public class OrderDto {
     private LocalDateTime createdAt;
     private List<OrderItemDto> items;
     private Double totalPrice;
+    private String address;
+    private String comment;
+    private String deliveryTime;
 }
 
 

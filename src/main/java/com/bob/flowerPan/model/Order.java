@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -47,4 +48,14 @@ public class Order {
     public void onCreate(){
         this.createdAt = LocalDateTime.now();
     }
+
+    @Size(max = 255)
+    private String address;
+
+    @Size(max = 255)
+    private String comment;
+
+    private String deliveryTime;
+
+    private boolean paid;
 }
